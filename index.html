@@ -21,25 +21,17 @@
         </div>
       </div>
 
-      <!-- ゲームステータス (STAGE, SCORE, TIMER, MOVES) -->
-      <div class="game-status-panel">
-        <div class="status-badge stage-badge">
-          <span class="status-label">STAGE</span>
-          <span class="status-value" id="ui-stage">1 / 5</span>
+      <!-- ステージナビ & ガイドバー -->
+      <nav class="scene-navbar">
+        <div class="stage-selector">
+          <span class="nav-label">STAGES:</span>
+          <button class="stage-btn active" data-stage="1">1: Gap Crossing</button>
+          <button class="stage-btn" data-stage="2">2: Bounce Launch</button>
+          <button class="stage-btn" data-stage="3">3: Heavy Seesaw</button>
+          <button class="stage-btn" data-stage="4">4: Dual Chasm</button>
+          <button class="stage-btn" data-stage="5">5: Master Puzzle</button>
         </div>
-        <div class="status-badge score-badge">
-          <span class="status-label">SCORE</span>
-          <span class="status-value" id="ui-score">0</span>
-        </div>
-        <div class="status-badge timer-badge">
-          <span class="status-label">TIMER</span>
-          <span class="status-value" id="ui-timer">00:00.0</span>
-        </div>
-        <div class="status-badge moves-badge">
-          <span class="status-label">MOVES</span>
-          <span class="status-value" id="ui-moves">0</span>
-        </div>
-      </div>
+      </nav>
 
       <!-- 統計情報 & サウンド切替 -->
       <div class="stats-panel">
@@ -57,134 +49,195 @@
       </div>
     </header>
 
-    <!-- ステージナビ & ガイドバー -->
-    <nav class="scene-navbar">
-      <div class="stage-selector">
-        <span class="nav-label">STAGES:</span>
-        <button class="stage-btn active" data-stage="1">1: Slope & Gap</button>
-        <button class="stage-btn" data-stage="2">2: Block Bridge</button>
-        <button class="stage-btn" data-stage="3">3: Super Bouncer</button>
-        <button class="stage-btn" data-stage="4">4: Heavy Seesaw</button>
-        <button class="stage-btn" data-stage="5">5: Chain Master</button>
-      </div>
-      <div class="stage-hint-box" id="stage-hint">
-        <span class="hint-icon">💡</span>
-        <span class="hint-text" id="stage-hint-text">動かせるブロックをドラッグして穴を塞ぎ、ボールをゴールへ導こう！</span>
-      </div>
-    </nav>
+    <!-- ガイドバー -->
+    <div class="stage-hint-box" id="stage-hint">
+      <span class="hint-icon">💡</span>
+      <span class="hint-text" id="stage-hint-text">左の「NEXT」から使いたいブロックをクリックしてステージへ投入しよう！</span>
+    </div>
 
-    <!-- メイン物理演算フィールド -->
-    <main class="canvas-wrapper">
-      <div id="canvas-container">
-        <!-- Matter.jsのCanvasがここに注入されます -->
+    <!-- 3カラム メインゲームレイアウト -->
+    <!-- [左: NEXTブロック待機エリア] [中央: ゲームステージ] [右: ゲーム情報] -->
+    <div class="game-main-layout">
+      <!-- 左：NEXTブロック待機エリア (物理空間から完全分離) -->
+      <aside class="panel-column panel-next" id="panel-next">
+        <div class="column-header">
+          <span class="column-icon">📦</span>
+          <h2 class="column-title">NEXT BLOCKS</h2>
+        </div>
+        <p class="next-guide">クリックまたはドラッグでステージへ投入</p>
 
-        <!-- タイトル画面オーバーレイ -->
-        <div id="screen-title" class="overlay-screen active">
-          <div class="modal-card title-card">
-            <div class="modal-icon">⚡</div>
-            <h2 class="title-logo">GRAVITY LAB</h2>
-            <p class="title-sub">Matter.js 2D 物理演算パズルゲーム</p>
-            <div class="title-instructions">
-              <h3>🎯 ゲームの目的</h3>
-              <p>物理演算の世界でボールをゴールまで導こう！</p>
-              <ul>
-                <li>✋ <strong>マウスで緑色の物体をドラッグ</strong>してボールの進行ルートを作る</li>
-                <li>⚙️ <strong>重力・衝突・反発・摩擦・質量</strong>の物理法則をフル活用</li>
-                <li>⚠️ <strong>ボールを直接操作することはできません</strong>（物体を動かして導く）</li>
-                <li>⚡ <strong>ボールが画面外に落ちたら失敗！</strong> RETRYで再挑戦</li>
-                <li>⏱️ <strong>短時間・少ない手数</strong>でクリアしてハイスコア（★★★）を目指せ！</li>
-              </ul>
+        <!-- NEXT待機キュー (1〜3個のブロックをカード表示) -->
+        <div class="next-queue" id="next-queue">
+          <!-- JSで自動生成されます -->
+        </div>
+
+        <div class="next-block-limits">
+          <span class="limit-label">ステージ上ブロック数:</span>
+          <span class="limit-value" id="ui-blocks">0 / 6</span>
+        </div>
+      </aside>
+
+      <!-- 中央：メイン物理演算フィールド (Canvas) -->
+      <main class="panel-column panel-stage canvas-wrapper">
+        <div id="canvas-container">
+          <!-- Matter.jsのCanvasがここに注入されます -->
+
+          <!-- タイトル画面オーバーレイ -->
+          <div id="screen-title" class="overlay-screen active">
+            <div class="modal-card title-card">
+              <div class="modal-icon">⚡</div>
+              <h2 class="title-logo">GRAVITY LAB</h2>
+              <p class="title-sub">物理パズルゲーム：NEXTブロックを投入してゴールへ導け！</p>
+              <div class="title-instructions">
+                <h3>🎯 ゲームの目的 & ルール</h3>
+                <p>左側の「NEXT」エリアからブロックを選んでステージに投入し、ボールをゴールへ導こう！</p>
+                <ul>
+                  <li>📦 <strong>NEXTブロックを投入</strong>：待機中のブロックをクリックしてステージへ送り出す</li>
+                  <li>✋ <strong>マウスで配置・回転</strong>：投入したブロックをドラッグ移動、ホイールまたは[R]キーで回転</li>
+                  <li>🧱 <strong>4種のブロック特性</strong>：
+                    <span style="color:#f59e0b">【通常】</span>標準 / 
+                    <span style="color:#0284c7">【軽量】</span>軽くて押される / 
+                    <span style="color:#94a3b8">【重量】</span>超重く動かない / 
+                    <span style="color:#db2777">【バウンド】</span>大ジャンプ
+                  </li>
+                  <li>♾️ <strong>奈落対策</strong>：ブロックが下に落ちても、新しいブロックをNEXTから随時投入可能！</li>
+                  <li>⚠️ <strong>ボール直接操作は禁止</strong>：ブロックで道を作って「RELEASE BALL」で発射！</li>
+                </ul>
+              </div>
+              <div class="title-actions">
+                <button id="btn-start-game" class="btn btn-primary btn-large">
+                  <span class="btn-icon">▶</span>
+                  <span class="btn-text">START GAME</span>
+                </button>
+              </div>
             </div>
-            <div class="title-actions">
-              <button id="btn-start-game" class="btn btn-primary btn-large">
-                <span class="btn-icon">▶</span>
-                <span class="btn-text">START GAME</span>
-              </button>
+          </div>
+
+          <!-- ステージクリア画面オーバーレイ -->
+          <div id="screen-clear" class="overlay-screen">
+            <div class="modal-card clear-card">
+              <div class="modal-icon clear-icon">🎉</div>
+              <h2 class="clear-title">STAGE CLEAR!</h2>
+              <div class="star-rating" id="clear-stars">
+                <span class="star active">★</span>
+                <span class="star active">★</span>
+                <span class="star active">★</span>
+              </div>
+              <div class="score-breakdown">
+                <div class="score-row">
+                  <span class="score-label">クリアタイム:</span>
+                  <span class="score-val" id="clear-time-val">00:08.4</span>
+                </div>
+                <div class="score-row">
+                  <span class="score-label">物体操作数 (Moves):</span>
+                  <span class="score-val" id="clear-moves-val">2 回</span>
+                </div>
+                <div class="score-row">
+                  <span class="score-label">リトライ回数:</span>
+                  <span class="score-val" id="clear-retries-val">0 回</span>
+                </div>
+                <div class="score-divider"></div>
+                <div class="score-row total-row">
+                  <span class="score-label">STAGE SCORE:</span>
+                  <span class="score-val highlight" id="clear-score-val">8,450</span>
+                </div>
+                <div class="score-row total-accum-row">
+                  <span class="score-label">TOTAL SCORE:</span>
+                  <span class="score-val" id="clear-total-score-val">8,450</span>
+                </div>
+              </div>
+              <div class="modal-actions">
+                <button id="btn-modal-retry" class="btn btn-secondary">
+                  <span class="btn-icon">🔄</span>
+                  <span class="btn-text">RETRY</span>
+                </button>
+                <button id="btn-modal-next" class="btn btn-primary">
+                  <span class="btn-icon">⏭️</span>
+                  <span class="btn-text">NEXT STAGE</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ゲームオーバー画面オーバーレイ -->
+          <div id="screen-gameover" class="overlay-screen">
+            <div class="modal-card gameover-card">
+              <div class="modal-icon gameover-icon">💥</div>
+              <h2 class="gameover-title">MISSED!</h2>
+              <p class="gameover-msg">ボールが奈落へ落下しました。ブロックの配置や角度を調整して再挑戦しよう！</p>
+              <div class="modal-actions">
+                <button id="btn-modal-gameover-retry" class="btn btn-primary btn-large">
+                  <span class="btn-icon">🔄</span>
+                  <span class="btn-text">RETRY BALL</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 全ステージ完全制覇画面オーバーレイ -->
+          <div id="screen-victory" class="overlay-screen">
+            <div class="modal-card victory-card">
+              <div class="modal-icon victory-icon">👑</div>
+              <h2 class="victory-title">CONGRATULATIONS!</h2>
+              <p class="victory-sub">すべての物理演算ステージを完全攻略しました！</p>
+              <div class="final-score-box">
+                <span class="final-label">FINAL TOTAL SCORE</span>
+                <span class="final-val" id="victory-final-score">42,500</span>
+              </div>
+              <div class="modal-actions">
+                <button id="btn-play-again" class="btn btn-primary btn-large">
+                  <span class="btn-icon">🔄</span>
+                  <span class="btn-text">PLAY AGAIN</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
+      </main>
 
-        <!-- ステージクリア画面オーバーレイ -->
-        <div id="screen-clear" class="overlay-screen">
-          <div class="modal-card clear-card">
-            <div class="modal-icon clear-icon">🎉</div>
-            <h2 class="clear-title">STAGE CLEAR!</h2>
-            <div class="star-rating" id="clear-stars">
-              <span class="star active">★</span>
-              <span class="star active">★</span>
-              <span class="star active">★</span>
-            </div>
-            <div class="score-breakdown">
-              <div class="score-row">
-                <span class="score-label">クリアタイム:</span>
-                <span class="score-val" id="clear-time-val">00:08.4</span>
-              </div>
-              <div class="score-row">
-                <span class="score-label">物体操作数 (Moves):</span>
-                <span class="score-val" id="clear-moves-val">2 回</span>
-              </div>
-              <div class="score-row">
-                <span class="score-label">リトライ回数:</span>
-                <span class="score-val" id="clear-retries-val">0 回</span>
-              </div>
-              <div class="score-divider"></div>
-              <div class="score-row total-row">
-                <span class="score-label">STAGE SCORE:</span>
-                <span class="score-val highlight" id="clear-score-val">8,450</span>
-              </div>
-              <div class="score-row total-accum-row">
-                <span class="score-label">TOTAL SCORE:</span>
-                <span class="score-val" id="clear-total-score-val">8,450</span>
-              </div>
-            </div>
-            <div class="modal-actions">
-              <button id="btn-modal-retry" class="btn btn-secondary">
-                <span class="btn-icon">🔄</span>
-                <span class="btn-text">RETRY</span>
-              </button>
-              <button id="btn-modal-next" class="btn btn-primary">
-                <span class="btn-icon">⏭️</span>
-                <span class="btn-text">NEXT STAGE</span>
-              </button>
-            </div>
-          </div>
+      <!-- 右：ゲーム情報エリア (TIME, SCORE, STAGE, MOVES) -->
+      <aside class="panel-column panel-info" id="panel-info">
+        <div class="column-header">
+          <span class="column-icon">📊</span>
+          <h2 class="column-title">GAME INFO</h2>
         </div>
 
-        <!-- ゲームオーバー画面オーバーレイ -->
-        <div id="screen-gameover" class="overlay-screen">
-          <div class="modal-card gameover-card">
-            <div class="modal-icon gameover-icon">💥</div>
-            <h2 class="gameover-title">GAME OVER</h2>
-            <p class="gameover-msg">ボールが画面外に落下しました！</p>
-            <div class="modal-actions">
-              <button id="btn-modal-gameover-retry" class="btn btn-primary btn-large">
-                <span class="btn-icon">🔄</span>
-                <span class="btn-text">RETRY</span>
-              </button>
-            </div>
-          </div>
+        <div class="info-card timer-card">
+          <span class="card-label">⏱️ TIME</span>
+          <span class="card-value timer-val" id="ui-timer">00:00.0</span>
         </div>
 
-        <!-- 全ステージ完全制覇画面オーバーレイ -->
-        <div id="screen-victory" class="overlay-screen">
-          <div class="modal-card victory-card">
-            <div class="modal-icon victory-icon">👑</div>
-            <h2 class="victory-title">CONGRATULATIONS!</h2>
-            <p class="victory-sub">すべての物理演算ステージを完全攻略しました！</p>
-            <div class="final-score-box">
-              <span class="final-label">FINAL TOTAL SCORE</span>
-              <span class="final-val" id="victory-final-score">42,500</span>
-            </div>
-            <div class="modal-actions">
-              <button id="btn-play-again" class="btn btn-primary btn-large">
-                <span class="btn-icon">🔄</span>
-                <span class="btn-text">PLAY AGAIN</span>
-              </button>
-            </div>
+        <div class="info-card stage-card">
+          <span class="card-label">🚩 STAGE</span>
+          <span class="card-value" id="ui-stage">1 / 5</span>
+        </div>
+
+        <div class="info-card score-card">
+          <span class="card-label">🏆 SCORE</span>
+          <span class="card-value" id="ui-score">0</span>
+        </div>
+
+        <div class="info-card moves-card">
+          <span class="card-label">🖐️ MOVES</span>
+          <span class="card-value" id="ui-moves">0</span>
+        </div>
+
+        <div class="status-summary-card">
+          <div class="summary-row">
+            <span>GAME STATE:</span>
+            <strong id="ui-gamestate" style="color:var(--accent-cyan)">TITLE</strong>
+          </div>
+          <div class="summary-row">
+            <span>BLOCK STATE:</span>
+            <strong id="ui-blockstate" style="color:var(--accent-amber)">FIXED (NO HIT)</strong>
+          </div>
+          <div class="summary-row">
+            <span>CONTROL:</span>
+            <span>Drag: Move / Wheel: Rotate</span>
           </div>
         </div>
-      </div>
-    </main>
+      </aside>
+    </div>
 
     <!-- 画面下部操作パネル -->
     <footer class="game-control-panel">
